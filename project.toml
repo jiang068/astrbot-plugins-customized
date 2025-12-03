@@ -1,0 +1,16 @@
+[project]
+name = "astr-jm2pdf"
+version = "0.1.0"
+description = "Minimal jm->pdf conversion tool"
+readme = "README.md"
+requires-python = ">=3.8"
+
+# Dependencies copied from requirements.txt
+dependencies = [
+  "jmcomic>=1.0.0",
+  "img2pdf>=0.4.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

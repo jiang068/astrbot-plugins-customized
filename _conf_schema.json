@@ -1,0 +1,120 @@
+{
+    "download_dir": {
+        "description": "下载目录",
+        "type": "string",
+        "hint": "漫画下载和PDF生成的临时目录（绝对路径或相对路径）",
+        "default": "./jm_downloads"
+    },
+    "keep_images": {
+        "description": "保留原始图片",
+        "type": "bool",
+        "hint": "下载完成后是否保留原始图片文件",
+        "default": false
+    },
+    "keep_pdf": {
+        "description": "保留PDF文件",
+        "type": "bool",
+        "hint": "发送完成后是否保留生成的PDF文件",
+        "default": false
+    },
+    "max_file_size_mb": {
+        "description": "最大文件大小限制(MB)",
+        "type": "int",
+        "hint": "生成的PDF文件大小限制，超过此大小会发送警告（0表示不限制）",
+        "default": 0
+    },
+    "jm_client_impl": {
+        "description": "JM客户端类型",
+        "type": "string",
+        "hint": "html=网页端(效率高但限制IP地区), api=APP端(不限IP兼容性好)",
+        "options": ["html", "api"],
+        "default": "api"
+    },
+    "jm_retry_times": {
+        "description": "请求重试次数",
+        "type": "int",
+        "hint": "单个请求失败后的重试次数",
+        "default": 5
+    },
+    "proxy": {
+        "description": "网络代理",
+        "type": "string",
+        "hint": "HTTP代理地址，例如: http://127.0.0.1:7890（留空表示使用系统代理）",
+        "default": ""
+    },
+    "jm_cookies_avs": {
+        "description": "JM Cookie (AVS)",
+        "type": "string",
+        "hint": "登录后的AVS Cookie值，用于访问需要登录的内容（可选）",
+        "default": ""
+    },
+    "timeout": {
+        "description": "下载超时时间(秒)",
+        "type": "int",
+        "hint": "单个请求的超时时间（秒）",
+        "default": 60
+    },
+    "download_cache": {
+        "description": "启用下载缓存",
+        "type": "bool",
+        "hint": "如果文件已存在则跳过下载",
+        "default": true
+    },
+    "image_decode": {
+        "description": "图片解码",
+        "type": "bool",
+        "hint": "是否还原JM混淆过的图片（建议开启）",
+        "default": true
+    },
+    "image_suffix": {
+        "description": "图片格式转换",
+        "type": "string",
+        "hint": "将所有图片转换为指定格式，例如: .jpg（留空表示不转换）",
+        "options": ["", ".jpg", ".png", ".webp"],
+        "default": ""
+    },
+    "concurrent_images": {
+        "description": "并发下载图片数",
+        "type": "int",
+        "hint": "同时下载的图片数量（1-50，建议10-30）",
+        "default": 30
+    },
+    "concurrent_photos": {
+        "description": "并发下载章节数",
+        "type": "int",
+        "hint": "同时下载的章节数量（建议4-16）",
+        "default": 8
+    },
+    "dir_rule": {
+        "description": "目录规则",
+        "type": "string",
+        "hint": "文件夹命名规则，例如: Bd/Aid/Pindex 或 Bd/Ptitle（Aid=本子ID, Pindex=章节序号, Ptitle=章节标题）",
+        "default": "Bd/Ptitle"
+    },
+    "normalize_zh": {
+        "description": "中文繁简转换",
+        "type": "string",
+        "hint": "对目录/文件名中的中文进行繁简体规范化",
+        "options": ["", "zh-cn", "zh-tw"],
+        "default": ""
+    },
+    "enable_jm_log": {
+        "description": "启用JM日志",
+        "type": "bool",
+        "hint": "是否显示JMComic库的详细日志",
+        "default": false
+    },
+    "send_progress_message": {
+        "description": "发送进度消息",
+        "type": "bool",
+        "hint": "是否在下载和转换过程中向用户发送进度消息（关闭后只发送最终结果或错误）",
+        "default": true
+    },
+    "log_level": {
+        "description": "日志详细级别",
+        "type": "string",
+        "hint": "simple=简略日志(只显示关键信息), detailed=详细日志(显示所有信息)",
+        "options": ["simple", "detailed"],
+        "default": "simple"
+    }
+}

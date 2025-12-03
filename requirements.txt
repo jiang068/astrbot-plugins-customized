@@ -1,0 +1,2 @@
+jmcomic>=1.0.0
+img2pdf>=0.4.0
