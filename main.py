@@ -24,7 +24,7 @@ except ImportError:
     img2pdf = None
 
 
-@register("astr-jm2pdf", "YourName", "下载禁漫天堂漫画并转换为PDF", "1.0.0", "https://github.com/yourname/astr-jm2pdf")
+@register("astr-jm2pdf", "jiang068", "下载禁漫天堂漫画并转换为PDF", "1.0.4", "https://github.com/jiang068/astr-jm2pdf")
 class JM2PDFPlugin(Star):
     def __init__(self, context: Context, config=None):
         super().__init__(context)
