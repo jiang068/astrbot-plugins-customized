@@ -140,5 +140,17 @@
         "hint": "simple=简略日志(只显示关键信息), detailed=详细日志(显示所有信息)",
         "options": ["simple", "detailed"],
         "default": "simple"
+    },
+    "private_only": {
+        "description": "仅允许私聊使用",
+        "type": "bool",
+        "hint": "开启后，插件只能在私聊中使用，群聊中触发指令会显示提示消息",
+        "default": false
+    },
+    "private_only_group_message": {
+        "description": "私聊模式群聊提示",
+        "type": "string",
+        "hint": "开启仅私聊模式后，在群聊中触发指令时显示的提示消息",
+        "default": "全部私聊功能已开启！"
     }
 }

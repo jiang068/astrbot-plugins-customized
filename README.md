@@ -10,6 +10,7 @@
 -  任务队列：多用户自动排队，避免资源耗尽
 -  超时保护：超时后转换部分内容，避免无限等待
 -  内存优化：图片不进内存，下载后直接传递给img2pdf压至pdf容器
+-  私聊模式：提供强制私聊模式，防止炸群
 
 ## 快速开始
 
@@ -71,3 +72,10 @@ RUN pip install jmcomic img2pdf
 ## 许可证
 
 MIT License
+
+## 致谢
+
+- [jmcomic](https://github.com/hect0x7/JMComic-Crawler-Python) - jmcomic下载库
+- [img2pdf](https://gitlab.mister-muffin.de/josch/img2pdf) - 图片转PDF工具
+- [AstrBot](https://github.com/Soulter/AstrBot) - 多平台聊天机器人框架
+- Claude Sonnet 4 - AI 辅助
