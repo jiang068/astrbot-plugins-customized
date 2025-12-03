@@ -6,12 +6,12 @@ from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.star import Context, Star, register
 from astrbot.api import logger
 
-# 导入模块
-from config import ConfigManager
-from permission import PermissionChecker
-from downloader import ComicDownloader
-from converter import PDFConverter
-from task_executor import TaskExecutor
+# 导入同目录下的模块（使用相对导入）
+from .config import ConfigManager
+from .permission import PermissionChecker
+from .downloader import ComicDownloader
+from .converter import PDFConverter
+from .task_executor import TaskExecutor
 
 try:
     import jmcomic
