@@ -2,6 +2,7 @@ import os
 import re
 import shutil
 import tempfile
+import asyncio
 from pathlib import Path
 from typing import Optional
 
@@ -26,6 +27,10 @@ class JM2PDFPlugin(Star):
         super().__init__(context)
         # 保存插件配置
         self.plugin_config = config if config is not None else {}
+        # 任务信号量（用于限制并发任务数）
+        self._task_semaphore = None
+        # 当前排队数（用于显示）
+        self._queue_count = 0
         
     def _log(self, level: str, message: str, force: bool = False):
         """根据配置的日志级别输出日志
@@ -68,6 +73,80 @@ class JM2PDFPlugin(Star):
             self._log('info', f"获取配置 {key}: {value}, 默认值: {default}")
         # 只有当配置值为 None 时才使用默认值
         return value if value is not None else default
+    
+    def _check_whitelist(self, event: AstrMessageEvent) -> bool:
+        """检查用户和群组是否在白名单中
+        
+        Args:
+            event: 消息事件
+            
+        Returns:
+            True表示允许使用，False表示拒绝
+        """
+        # 获取白名单配置
+        whitelist_groups_str = self._get_config_value('whitelist_groups', '')
+        whitelist_users_str = self._get_config_value('whitelist_users', '')
+        
+        # 解析白名单（去除空格，过滤空字符串）
+        whitelist_groups = set()
+        if whitelist_groups_str:
+            whitelist_groups = {g.strip() for g in whitelist_groups_str.split(',') if g.strip()}
+        
+        whitelist_users = set()
+        if whitelist_users_str:
+            whitelist_users = {u.strip() for u in whitelist_users_str.split(',') if u.strip()}
+        
+        # 获取当前用户和群组信息
+        user_id = str(event.get_sender_id())
+        group_id = str(event.message_obj.group_id) if event.message_obj.group_id else ""
+        is_group = bool(group_id)
+        
+        # 详细日志
+        logger.info(f"白名单检查 - 用户ID: {user_id}, 群组ID: {group_id}, 是否群聊: {is_group}")
+        logger.info(f"白名单用户配置: {whitelist_users if whitelist_users else '空(允许所有用户)'}")
+        logger.info(f"白名单群组配置: {whitelist_groups if whitelist_groups else '空(允许所有群组)'}")
+        
+        # 新逻辑：用户白名单和群组白名单独立判断
+        
+        # 1. 检查用户白名单
+        user_pass = False
+        if not whitelist_users:
+            # 用户白名单为空 = 允许所有用户
+            user_pass = True
+            logger.info(f"用户白名单未配置，用户 {user_id} 通过")
+        elif user_id in whitelist_users:
+            # 用户在白名单中
+            user_pass = True
+            logger.info(f"✅ 用户 {user_id} 在白名单中")
+        else:
+            logger.warning(f"❌ 用户 {user_id} 不在白名单中")
+        
+        # 2. 检查群组白名单（仅群聊时需要检查）
+        group_pass = False
+        if not is_group:
+            # 私聊消息，不需要检查群组白名单
+            group_pass = True
+            logger.info("私聊消息，跳过群组白名单检查")
+        elif not whitelist_groups:
+            # 群组白名单为空 = 允许所有群组
+            group_pass = True
+            logger.info(f"群组白名单未配置，群组 {group_id} 通过")
+        elif group_id in whitelist_groups:
+            # 群组在白名单中
+            group_pass = True
+            logger.info(f"✅ 群组 {group_id} 在白名单中")
+        else:
+            logger.warning(f"❌ 群组 {group_id} 不在白名单中")
+        
+        # 3. 两者都需要通过（AND 逻辑）
+        result = user_pass and group_pass
+        
+        if result:
+            logger.info(f"✅ 白名单检查通过")
+        else:
+            logger.warning(f"❌ 白名单检查失败")
+        
+        return result
         
     async def initialize(self):
         """插件初始化"""
@@ -76,6 +155,15 @@ class JM2PDFPlugin(Star):
             logger.error("jmcomic 模块未安装，请使用 pip install jmcomic 安装")
         if img2pdf is None:
             logger.error("img2pdf 模块未安装，请使用 pip install img2pdf 安装")
+        
+        # 初始化任务信号量
+        max_concurrent = self._get_config_value('max_concurrent_tasks', 2)
+        if max_concurrent > 0:
+            self._task_semaphore = asyncio.Semaphore(max_concurrent)
+            logger.info(f"任务并发限制: 最多 {max_concurrent} 个任务同时运行")
+        else:
+            self._task_semaphore = None
+            logger.info("任务并发限制: 无限制")
         
         # 获取配置并显示（强制输出，不受日志级别限制）
         logger.info("JM2PDF 插件初始化完成")
@@ -94,6 +182,11 @@ class JM2PDFPlugin(Star):
         使用方法: /jm <漫画ID>
         示例: /jm 123456
         """
+        # 白名单检查
+        if not self._check_whitelist(event):
+            # 已经在 _check_whitelist 中记录了详细日志
+            return
+        
         # 检查依赖
         if jmcomic is None or img2pdf is None:
             yield event.plain_result("❌ 缺少必要的依赖库，请先安装 jmcomic 和 img2pdf")
@@ -128,22 +221,76 @@ class JM2PDFPlugin(Star):
             yield event.chain_result([File(file=expected_pdf_path, name=f"jm_{comic_id}.pdf")])
             return
         
-        logger.info(f"开始处理漫画 ID: {comic_id}")  # 关键日志，强制输出
-        if send_progress:
-            yield event.plain_result(f"📥 开始下载漫画 {comic_id}，请稍候...")
+        # 任务队列控制
+        if self._task_semaphore is not None:
+            # 检查当前是否需要排队
+            if self._task_semaphore.locked():
+                self._queue_count += 1
+                queue_position = self._queue_count
+                logger.info(f"任务队列已满，用户 {event.get_sender_id()} 排队中，前方 {queue_position} 个任务")
+                if send_progress:
+                    yield event.plain_result(f"⏳ 当前下载任务较多，您的请求正在排队...\n📊 前方还有 {queue_position} 个任务")
+                
+                # 等待获取信号量
+                async with self._task_semaphore:
+                    self._queue_count -= 1
+                    logger.info(f"用户 {event.get_sender_id()} 的任务开始执行")
+                    if send_progress:
+                        yield event.plain_result(f"✅ 轮到您了！开始下载漫画 {comic_id}...")
+                    # 执行实际下载任务
+                    async for result in self._execute_download_task(event, comic_id, send_progress, download_dir):
+                        yield result
+            else:
+                # 直接获取信号量并执行
+                async with self._task_semaphore:
+                    logger.info(f"用户 {event.get_sender_id()} 的任务立即开始")
+                    if send_progress:
+                        yield event.plain_result(f"📥 开始下载漫画 {comic_id}，请稍候...")
+                    async for result in self._execute_download_task(event, comic_id, send_progress, download_dir):
+                        yield result
+        else:
+            # 没有并发限制，直接执行
+            logger.info(f"开始处理漫画 ID: {comic_id}")
+            if send_progress:
+                yield event.plain_result(f"📥 开始下载漫画 {comic_id}，请稍候...")
+            async for result in self._execute_download_task(event, comic_id, send_progress, download_dir):
+                yield result
+    
+    async def _execute_download_task(self, event: AstrMessageEvent, comic_id: str, send_progress: bool, download_dir: str):
+        """执行下载任务的实际逻辑"""
         
         temp_dir = None
         pdf_path = None
+        download_timeout = False
         
         try:
             # 创建临时目录用于下载
             temp_dir = tempfile.mkdtemp(prefix=f"jm_{comic_id}_", dir=download_dir)
             self._log('info', f"临时下载目录: {temp_dir}")
             
-            # 下载漫画
-            await self._download_comic(comic_id, temp_dir)
-            logger.info(f"漫画 {comic_id} 下载完成")  # 关键日志，强制输出
-            if send_progress:
+            # 获取超时配置
+            timeout_minutes = self._get_config_value('task_timeout_minutes', 10)
+            
+            # 下载漫画（带超时控制）
+            if timeout_minutes > 0:
+                timeout_seconds = timeout_minutes * 60
+                try:
+                    await asyncio.wait_for(
+                        self._download_comic(comic_id, temp_dir),
+                        timeout=timeout_seconds
+                    )
+                    logger.info(f"漫画 {comic_id} 下载完成")
+                except asyncio.TimeoutError:
+                    download_timeout = True
+                    logger.warning(f"漫画 {comic_id} 下载超时（{timeout_minutes}分钟），尝试转换已下载的图片")
+                    if send_progress:
+                        yield event.plain_result(f"⚠️ 下载任务超时（{timeout_minutes}分钟），尝试转换已下载的图片...")
+            else:
+                # 无超时限制
+                await self._download_comic(comic_id, temp_dir)
+                logger.info(f"漫画 {comic_id} 下载完成")
+            
+            if not download_timeout and send_progress:
                 yield event.plain_result(f"✅ 下载完成，开始转换PDF...")
             
             # 转换为PDF
@@ -164,15 +311,31 @@ class JM2PDFPlugin(Star):
                     )
                 
                 if send_progress:
-                    yield event.plain_result(f"✅ PDF生成成功 ({pdf_size:.2f} MB)，准备发送...")
+                    if download_timeout:
+                        yield event.plain_result(f"✅ 已将部分下载的图片转换为PDF ({pdf_size:.2f} MB)，准备发送...")
+                    else:
+                        yield event.plain_result(f"✅ PDF生成成功 ({pdf_size:.2f} MB)，准备发送...")
                 
                 # 使用消息链发送PDF文件
                 from astrbot.api.message_components import File
                 yield event.chain_result([File(file=pdf_path, name=f"jm_{comic_id}.pdf")])
-                logger.info(f"PDF已发送: {pdf_path}")  # 关键日志，强制输出
-            else:
-                yield event.plain_result("❌ PDF文件生成失败")
                 
+                if download_timeout:
+                    logger.warning(f"PDF已发送（部分内容，因超时）: {pdf_path}")
+                    if send_progress:
+                        yield event.plain_result("⚠️ 注意：此PDF仅包含超时前下载的部分图片")
+                else:
+                    logger.info(f"PDF已发送: {pdf_path}")
+            else:
+                if download_timeout:
+                    yield event.plain_result("❌ 下载超时且未能找到可转换的图片")
+                else:
+                    yield event.plain_result("❌ PDF文件生成失败")
+                
+        except asyncio.TimeoutError:
+            # 这个异常已在上面处理，不应该到这里
+            logger.error(f"意外的超时异常: {comic_id}")
+            yield event.plain_result(f"❌ 任务执行超时")
         except Exception as e:
             logger.error(f"处理漫画 {comic_id} 时出错: {str(e)}", exc_info=True)
             yield event.plain_result(f"❌ 处理失败: {str(e)}")
@@ -290,7 +453,9 @@ class JM2PDFPlugin(Star):
         self._log('info', f"并发: 图片={concurrent_images}, 章节={concurrent_photos}")
         self._log('info', f"下载目录: {download_path}")
         
-        jmcomic.download_album(comic_id, option)
+        # 使用 asyncio.to_thread 在后台线程运行阻塞的下载函数
+        # 这样不会阻塞 AstrBot 的事件循环
+        await asyncio.to_thread(jmcomic.download_album, comic_id, option)
         # 下载完成由调用方记录关键日志
 
     async def _convert_to_pdf(self, comic_id: str, source_dir: str, download_dir: str) -> Optional[str]:
@@ -332,9 +497,16 @@ class JM2PDFPlugin(Star):
             # img2pdf会自动处理JPEG、PNG等格式，无需手动转换
             # 对于RGBA等特殊格式，img2pdf会自动应用PNG Paeth过滤器
             self._log('info', f"开始转换PDF，共 {len(image_files)} 张图片")
-            with open(pdf_path, "wb") as f:
-                # 使用 rotation=img2pdf.Rotation.ifvalid 处理无效的EXIF方向值
-                f.write(img2pdf.convert(image_files, rotation=img2pdf.Rotation.ifvalid))
+            
+            # 定义转换函数（在线程中运行）
+            def convert_to_pdf_sync():
+                with open(pdf_path, "wb") as f:
+                    # 使用 rotation=img2pdf.Rotation.ifvalid 处理无效的EXIF方向值
+                    f.write(img2pdf.convert(image_files, rotation=img2pdf.Rotation.ifvalid))
+            
+            # 使用 asyncio.to_thread 在后台线程运行 PDF 转换
+            # 避免大量图片时阻塞事件循环
+            await asyncio.to_thread(convert_to_pdf_sync)
             
             logger.info(f"PDF转换成功: {pdf_path}")  # 关键日志，强制输出
             return pdf_path

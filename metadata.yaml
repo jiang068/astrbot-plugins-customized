@@ -1,6 +1,6 @@
 name: astr-jm2pdf
 display_name: JM漫画转PDF插件
 desc: 下载禁漫天堂漫画并转换为PDF文件发送给用户
-version: v1.0.0
+version: v1.0.3
 author: jiang068
 repo: https://github.com/jiang068/astr-jm2pdf

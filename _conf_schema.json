@@ -5,6 +5,18 @@
         "hint": "漫画下载和PDF生成的临时目录（绝对路径或相对路径）",
         "default": "./jm_downloads"
     },
+    "whitelist_groups": {
+        "description": "白名单群组",
+        "type": "string",
+        "hint": "允许使用插件的群组ID列表，多个ID用逗号分隔。留空表示所有群组都可用",
+        "default": ""
+    },
+    "whitelist_users": {
+        "description": "白名单用户",
+        "type": "string",
+        "hint": "允许使用插件的用户ID列表，多个ID用逗号分隔。留空表示所有用户都可用",
+        "default": ""
+    },
     "keep_images": {
         "description": "保留原始图片",
         "type": "bool",
@@ -22,6 +34,18 @@
         "type": "int",
         "hint": "生成的PDF文件大小限制，超过此大小会发送警告（0表示不限制）",
         "default": 0
+    },
+    "max_concurrent_tasks": {
+        "description": "最大并发任务数",
+        "type": "int",
+        "hint": "同时允许的最大下载任务数。多余的请求会排队等待（建议1-3）",
+        "default": 2
+    },
+    "task_timeout_minutes": {
+        "description": "任务超时时间(分钟)",
+        "type": "int",
+        "hint": "单个下载任务的最大执行时间（分钟）。超时后会尝试转换已下载的图片为PDF（0表示不限制）",
+        "default": 10
     },
     "jm_client_impl": {
         "description": "JM客户端类型",
@@ -76,14 +100,14 @@
     "concurrent_images": {
         "description": "并发下载图片数",
         "type": "int",
-        "hint": "同时下载的图片数量（1-50，建议10-30）",
-        "default": 30
+        "hint": "同时下载的图片数量（1-50）。数值越大内存占用越高，建议5-10以控制内存",
+        "default": 8
     },
     "concurrent_photos": {
         "description": "并发下载章节数",
         "type": "int",
-        "hint": "同时下载的章节数量（建议4-16）",
-        "default": 8
+        "hint": "同时下载的章节数量（1-16）。数值越大内存占用越高，建议1-3以控制内存",
+        "default": 2
     },
     "dir_rule": {
         "description": "目录规则",
