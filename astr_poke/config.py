@@ -38,7 +38,7 @@ class ConfigManager:
     def _string_to_list(
         input_str: str,
         return_type: str = "str",
-        sep: str | list[str] = [":", "：", ",", "，"],
+        sep: str | list[str] = [":", "：", ","],
     ) -> list[str | int]:
         """
         将字符串转换为列表，支持自定义一个或多个分隔符和返回类型。
