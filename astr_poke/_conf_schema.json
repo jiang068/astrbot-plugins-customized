@@ -1,0 +1,78 @@
+{
+    "follow_poke_th":{
+        "description": "跟戳概率",
+        "type": "float",
+        "hint": "检测到别人被戳时，随机跟着戳一下",
+        "default": 0.6
+    },
+    "poke_max_times": {
+        "description": "戳一戳最大次数",
+        "type": "int",
+        "hint": "发送戳一戳时的最大连戳数, 但bot管理员不受限制",
+        "default": 3
+    },
+    "poke_interval": {
+        "description": "戳一戳间隔",
+        "type": "float",
+        "hint": "发送戳一戳时，每次戳的时间间隔，单位为秒",
+        "default": 0.5
+    },
+    "cooldown_seconds": {
+        "description": "戳一戳冷却时间",
+        "type": "int",
+        "hint": "每个用户戳bot的冷却时间，单位为秒，冷却时间内不检测该用户的戳一戳，可有效防止挂逼连戳",
+        "default": 5
+    },
+    
+    "poke_back_probability": {
+        "description": "反戳概率",
+        "type": "float",
+        "hint": "被戳时触发反戳的概率，范围0-1，设置为0表示不反戳，1表示必定反戳",
+        "default": 0.7
+    },
+    "poke_back_reply_list": {
+        "description": "反戳后回复文本",
+        "type": "text",
+        "hint": "反戳后随机选择一条文本进行回复，用逗号隔开多条预设回复。留空则反戳时不回复文本",
+        "default": "？,干嘛？"
+    },
+
+    "text_reply_probability": {
+        "description": "文本回复概率",
+        "type": "float",
+        "hint": "被戳时触发文本回复的概率，范围0-1，设置为0表示不回复文本，1表示必定回复",
+        "default": 0.5
+    },
+    "text_reply_list": {
+        "description": "文本回复内容",
+        "type": "text",
+        "hint": "触发文本回复时，随机选择一条文本进行回复，用逗号隔开多条预设回复",
+        "default": "干嘛戳我！,别戳了！,你再戳！,烦死了,讨厌~"
+    },
+
+    "face_reply_probability": {
+        "description": "表情回复概率",
+        "type": "float",
+        "hint": "被戳时触发表情回复的概率，范围0-1，设置为0表示不回复表情，1表示必定回复",
+        "default": 0.3
+    },
+    "face_ids_str": {
+        "description": "表情ID",
+        "type": "text",
+        "hint": "触发qq表情回复时，随机调用一个表情ID，请用逗号隔开各个表情ID",
+        "default": "1,11,14,15,23,25,26,27,31,46,97,98,18,265,266,267,271,287,312,352,427"
+    },
+
+    "poke_others_reply_list": {
+        "description": "戳别人后的回复文本",
+        "type": "text",
+        "hint": "使用指令戳@某人后，随机选择一条文本进行回复，用逗号隔开多条预设回复。留空则不回复文本",
+        "default": "戳了,戳好了"
+    },
+    "poke_me_reply_list": {
+        "description": "戳我后的回复文本",
+        "type": "text",
+        "hint": "使用指令'戳我'后，随机选择一条文本进行回复，用逗号隔开多条预设回复。留空则不回复文本",
+        "default": "戳你了,m？"
+    }
+}
