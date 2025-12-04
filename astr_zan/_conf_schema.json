@@ -1,0 +1,44 @@
+{
+    "white_list_groups": {
+        "description": "群聊白名单",
+        "type": "list",
+        "hint": "只有在白名单的群聊才启用点赞功能, 若没填写则默认全部群聊可用",
+        "default": []
+    },
+    "success_responses": {
+        "description": "点赞成功回复",
+        "type": "list",
+        "hint": "点赞成功时的随机回复消息，支持占位符 {username} 和 {total_likes}",
+        "default": [
+            "赞了",
+            "给{username}点了{total_likes}个赞"
+        ]
+    },
+    "limit_responses": {
+        "description": "点赞数到达上限回复",
+        "type": "list",
+        "hint": "今日点赞次数已达上限时的随机回复消息，支持占位符 {username}",
+        "default": [
+            "赞过了",
+            "今天给{username}的赞已达上限"
+        ]
+    },
+    "stranger_responses": {
+        "description": "点赞失败回复",
+        "type": "list",
+        "hint": "点赞失败时的兜底回复（通常是非好友、陌生人等其他原因导致的失败），支持占位符 {username}",
+        "default": [
+            "不加好友不赞",
+            "你谁呀？"
+        ]
+    },
+    "permission_responses": {
+        "description": "权限阻碍回复",
+        "type": "list",
+        "hint": "对方设置了权限不允许陌生人点赞时的随机回复消息，支持占位符 {username}",
+        "default": [
+            "你设了权限不许陌生人赞你",
+            "权限不够，赞不了你"
+        ]
+    }
+}

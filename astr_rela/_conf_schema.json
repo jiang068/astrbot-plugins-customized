@@ -1,0 +1,58 @@
+{
+    "manage_group": {
+        "description": "管理群号",
+        "type": "string",
+        "hint": "Bot收到的好友申请、群邀请等审批信息将发送到此群。留空则私发给所有管理员。格式：纯数字群号，如 123456789",
+        "default": "",
+        "obvious_hint": true
+    },
+    "max_ban_duration": {
+        "description": "最大允许禁言时长（秒）",
+        "type": "int",
+        "hint": "Bot被禁言超过此时长将自动退群。推荐值：86400（一天）= 24小时 × 3600秒",
+        "default": 86400
+    },
+    "max_group_capacity": {
+        "description": "最大群容量限制",
+        "type": "int",
+        "hint": "Bot加入的群数量超过此值时，再被拉入新群将自动退出。可有效防止被恶意乱拉群。设为0表示不限制。推荐值：100",
+        "default": 100
+    },
+    "group_blacklist": {
+        "description": "群聊黑名单",
+        "type": "list",
+        "hint": "Bot将拒绝加入黑名单中的群聊。每行一个群号。Bot被踢出群时会自动将该群加入黑名单。",
+        "default": []
+    },
+    "mutual_blacklist": {
+        "description": "互斥成员黑名单",
+        "type": "list",
+        "hint": "Bot加入群时，如果检测到群内有此名单中的成员，将自动退群。每行一个QQ号。可用于屏蔽特定用户。",
+        "default": []
+    },
+    "auto_check_messages": {
+        "description": "自动抽查群消息",
+        "type": "bool",
+        "hint": "开启后，每次发生群管理事件（如被设为管理员、被禁言、被踢出、被拉入新群等）时，Bot会自动抽查该群的最近聊天记录并转发给管理员/管理群",
+        "default": false
+    },
+    "new_group_check_delay": {
+        "description": "新群延迟抽查时间（秒）",
+        "type": "int",
+        "hint": "Bot被拉入新群后，延迟多少秒再执行自动抽查。给群成员一些时间发言，以便抽查到有效内容。推荐值：300-600秒（5-10分钟）",
+        "default": 600
+    },
+    "enable_auto_approve": {
+        "description": "启用自动通过好友申请",
+        "type": "bool",
+        "hint": "开启后，验证信息包含指定关键词的好友申请将自动通过。关闭则所有申请都需要手动审批。",
+        "default": false
+    },
+    "auto_approve_keyword": {
+        "description": "自动通过好友申请的关键词",
+        "type": "string",
+        "hint": "当好友申请的验证信息包含此关键词时，Bot将自动通过申请。需要先开启'启用自动通过好友申请'功能。示例：'暗号123'",
+        "default": "",
+        "obvious_hint": true
+    }
+}
